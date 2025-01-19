@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Taryfikator RP</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(120deg, #1a1a2e, #0f3460);
+            color: #f0f0f0;
+        }
+
+        /* Loading Screen */
+        #loading-screen, #logging-in-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(120deg, #000046, #1cb5e0);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 1000;
+        }
+
+        #loading-screen h1, #logging-in-screen h1 {
+            font-size: 36px;
+            animation: fadeIn 2s infinite;
+        }
+
+        #loading-screen p, #logging-in-screen p {
+            font-size: 18px;
+            margin-top: 10px;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin-top: 20px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes fadeIn {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        /* Login Screen */
+        #login-container {
+            display: none;
+            height: 100vh;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(120deg, #1cb5e0, #000046);
+            color: white;
+        }
+
+        .login-box {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.7);
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+        }
+
+        .login-box h2 {
+            color: #003366;
+        }
+
+        .login-box input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        .login-box button {
+            width: 100%;
+            padding: 10px;
+            background: linear-gradient(90deg, #ff0000, #0000ff);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease-in-out;
+        }
+
+        .login-box button:hover {
+            transform: scale(1.05);
+        }
+
+        main {
+            display: none;
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 20px;
+            background: #1a1a2e;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.7);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            margin-top: 20px;
+        }
+
+        table th, table td {
+            padding: 10px;
+            border: 1px solid #444;
+        }
+
+        table th {
+            background: linear-gradient(90deg, #ff0000, #0000ff);
+            color: white;
+        }
+
+        table tr:nth-child(even) {
+            background-color: #1a1a2e;
+        }
+
+        table tr:hover {
+            background-color: #2a2a3e;
+            cursor: pointer;
+            transition: background-color 0.3s ease-in-out;
+        }
+
+        .summary {
+            margin-top: 20px;
+            padding: 15px;
+            background: linear-gradient(90deg, #ff0000, #0000ff);
+            color: white;
+            text-align: center;
+            border-radius: 10px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            color: black;
+        }
+
+        .modal-buttons button {
+            margin: 5px;
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .btn-yes {
+            background: green;
+            color: white;
+        }
+
+        .btn-no {
+            background: red;
+            color: white;
+        }
+
+        footer {
+            text-align: center;
+            padding: 10px 0;
+            background: #1a1a2e;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+<div id="loading-screen">
+    <h1>Ładowanie...</h1>
+    <p>Proszę czekać, trwa przygotowywanie taryfikatora.</p>
+    <div class="spinner"></div>
+</div>
+
+<div id="logging-in-screen" style="display: none;">
+    <h1>Trwa logowanie...</h1>
+    <p>Proszę czekać, trwa uwierzytelnianie użytkownika.</p>
+    <div class="spinner"></div>
+</div>
+
+<div id="login-container">
+    <div class="login-box">
+        <h2>Zaloguj się</h2>
+        <input type="text" id="username" placeholder="Wprowadź login">
+        <input type="password" id="password" placeholder="Wprowadź hasło">
+        <button onclick="login()">Zaloguj</button>
+        <p id="login-error" style="color: red; display: none;">Niepoprawny login lub hasło!</p>
+    </div>
+</div>
+
+<main>
+    <h2>Lista Wykroczeń</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Numer</th>
+                <th>Wykroczenie</th>
+                <th>Kara (PLN)</th>
+                <th>Punkty Karne</th>
+                <th>Liczba Dodana</th>
+            </tr>
+        </thead>
+        <tbody id="violations">
+            <!-- Dynamicznie dodawane -->
+        </tbody>
+    </table>
+
+    <div class="summary">
+        <p id="summary-text">Kary: 0 PLN, Punkty Karne: 0</p>
+    </div>
+</main>
+
+<div id="confirmation-modal" class="modal">
+    <div class="modal-content">
+        <h3>Czy na pewno chcesz dodać to wykroczenie?</h3>
+        <div class="modal-buttons">
+            <button class="btn-yes" onclick="confirmAdd(true)">Tak</button>
+            <button class="btn-no" onclick="confirmAdd(false)">Nie</button>
+        </div>
+    </div>
+</div>
+
+<footer>
+    <p>&copy; 2025 Taryfikator RP. Wszystkie prawa zastrzeżone.</p>
+</footer>
+
+<script>
+    const validUsername = "KWP";
+    const validPassword = "KWP";
+
+    const violations = [
+        { id: 1, name: "Przekroczenie prędkości o 10-20 km/h", penalty: 200, points: 2, count: 0 },
+        { id: 2, name: "Przekroczenie prędkości o 21-50 km/h", penalty: 400, points: 4, count: 0 },
+        { id: 3, name: "Jazda pod wpływem alkoholu", penalty: 5000, points: 20, count: 0 },
+        { id: 4, name: "Jazda bez zapiętych pasów", penalty: 100, points: 2, count: 0 },
+    ];
+
+    let selectedViolation = null;
+
+    function populateViolations() {
+        const tbody = document.getElementById("violations");
+        tbody.innerHTML = "";
+        violations.forEach((violation, index) => {
+            const row = `<tr onclick="showConfirmation(${index})">
+                <td>${index + 1}</td>
+                <td>${violation.name}</td>
+                <td>${violation.penalty} PLN</td>
+                <td>${violation.points}</td>
+                <td>${violation.count}</td>
+            </tr>`;
+            tbody.innerHTML += row;
+        });
+        updateSummary();
+    }
+
+    function showConfirmation(index) {
+        selectedViolation = index;
+        document.getElementById("confirmation-modal").style.display = "flex";
+    }
+
+    function confirmAdd(confirm) {
+        if (confirm && selectedViolation !== null) {
+            violations[selectedViolation].count++;
+            populateViolations();
+        }
+        selectedViolation = null;
+        document.getElementById("confirmation-modal").style.display = "none";
+    }
+
+    function updateSummary() {
+        let totalPenalty = 0;
+        let totalPoints = 0;
+
+        violations.forEach((violation) => {
+            totalPenalty += violation.penalty * violation.count;
+            totalPoints += violation.points * violation.count;
+        });
+
+        document.getElementById("summary-text").textContent = `Kary: ${totalPenalty} PLN, Punkty Karne: ${totalPoints}`;
+    }
+
+    function login() {
+        const username = document.getElementById("username").value;
+        const password = document.getElementById("password").value;
+
+        if (username === validUsername && password === validPassword) {
+            document.getElementById("login-container").style.display = "none";
+            document.getElementById("logging-in-screen").style.display = "flex";
+
+            setTimeout(() => {
+                document.getElementById("logging-in-screen").style.display = "none";
+                document.querySelector("main").style.display = "block";
+                populateViolations();
+            }, 2000); // Czas trwania logowania
+        } else {
+            document.getElementById("login-error").style.display = "block";
+        }
+    }
+
+    window.addEventListener("load", () => {
+        setTimeout(() => {
+            document.getElementById("loading-screen").style.display = "none";
+            document.getElementById("login-container").style.display = "flex";
+        }, 2000);
+    });
+</script>
+</body>
+</html>
